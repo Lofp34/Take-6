@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>6 qui prend ! — Score + Stats</title>
+  <style>
+    :root{
+      --bg: #0b0f0e;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.05);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --accent: #00d9ff;
+      --good: #32cd32;
+      --warn: #ffb400;
+      --bad:  #ff4081;
+      --radius: 18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: -apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background: radial-gradient(1100px 700px at 20% 10%, rgba(0,217,255,.22), transparent 55%),
+                  radial-gradient(900px 600px at 80% 30%, rgba(50,205,50,.18), transparent 52%),
+                  linear-gradient(180deg, #0b0f0e 0%, #0d1f17 100%);
+      padding: 22px;
+    }
+    .wrap{max-width:1200px;margin:0 auto}
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+      margin-bottom: 16px;
+    }
+    .title{
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      flex: 1;
+      min-width: 260px;
+    }
+    h1{
+      font-size: 22px;
+      margin: 0 0 6px 0;
+      letter-spacing: .2px;
+    }
+    .sub{color:var(--muted); font-size: 14px; line-height: 1.35}
+    .sub b{color:var(--text)}
+    .toolbar{
+      display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end;
+    }
+    button, .btn{
+      appearance:none; border:1px solid var(--stroke); background: var(--card);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 650;
+      letter-spacing: .2px;
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 14px;
+    }
+    button:hover, .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10)}
+    button:active, .btn:active{transform: translateY(0px) scale(.99)}
+    button.primary, .btn.primary{border-color: rgba(0,217,255,.35); background: rgba(0,217,255,.14)}
+    button.danger, .btn.danger{border-color: rgba(255,64,129,.35); background: rgba(255,64,129,.12)}
+    button.ghost, .btn.ghost{background: transparent}
+    button:disabled{opacity:.5; cursor:not-allowed; transform:none}
+    .grid{
+      display:grid; grid-template-columns: 1.25fr .75fr; gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 1000px){
+      .grid{grid-template-columns: 1fr}
+      header{flex-direction:column}
+      .toolbar{justify-content:flex-start}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 14px;
+    }
+    .card h2{
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: .2px;
+    }
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    label{color:var(--muted); font-size: 13px}
+    input[type="number"], input[type="text"]{
+      width: 140px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+    }
+    input[type="text"]{width: 200px}
+    input[type="number"]{font-family: var(--mono)}
+    input:focus{border-color: rgba(0,217,255,.45)}
+    .hint{color:var(--muted); font-size: 12.5px; line-height: 1.35; margin-top: 8px}
+    .scores{
+      overflow:auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke);
+    }
+    table{
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 760px;
+      background: rgba(0,0,0,.12);
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align: center;
+      white-space: nowrap;
+    }
+    th{
+      position: sticky;
+      top: 0;
+      background: rgba(8,10,10,.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 2;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 750;
+      letter-spacing: .25px;
+    }
+    th:first-child, td:first-child{
+      text-align:left;
+      position: sticky;
+      left: 0;
+      background: rgba(8,10,10,.85);
+      z-index: 3;
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+    td:first-child{background: rgba(0,0,0,.18); font-weight: 750; color: var(--text)}
+    .cell-input{
+      width: 84px;
+      padding: 8px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      text-align: center;
+      font-family: var(--mono);
+    }
+    .totals{font-weight: 850; font-size: 14px;}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-size: 13px;
+      margin-right: 8px;
+      margin-bottom: 6px;
+    }
+    .dot{width:9px;height:9px;border-radius:99px;background:var(--accent); box-shadow: 0 0 0 4px rgba(0,217,255,.18)}
+    .dot.good{background:var(--good); box-shadow: 0 0 0 4px rgba(50,205,50,.16)}
+    .dot.warn{background:var(--warn); box-shadow: 0 0 0 4px rgba(255,180,0,.18)}
+    .dot.bad{background:var(--bad); box-shadow: 0 0 0 4px rgba(255,64,129,.18)}
+    .small{font-size:12px;color:var(--muted)}
+    .footer{margin-top: 14px; color: var(--muted); font-size: 12.5px; line-height: 1.4;}
+    .right{display:flex; flex-direction:column; gap:12px;}
+    .divider{height:1px;background:rgba(255,255,255,.10); margin: 12px 0}
+    .rank{display:flex; flex-direction:column; gap:8px; margin-top: 6px;}
+    .rank-item{
+      display:flex; justify-content:space-between; align-items:center;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      font-size: 14px;
+      gap: 10px;
+    }
+    .rank-item b{font-family: var(--mono)}
+    .rank-item .pos{
+      width: 26px; height: 26px; display:grid; place-items:center;
+      border-radius: 9px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-weight: 800;
+      font-family: var(--mono);
+    }
+    .rank-item.win{border-color: rgba(50,205,50,.35); background: rgba(50,205,50,.10);}
+    .rank-item.over{border-color: rgba(255,64,129,.35); background: rgba(255,64,129,.10);}
+    .file{display:none;}
+
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 1000px){
+      .kpi{grid-template-columns: repeat(2, 1fr);}
+    }
+    .kpi .tile{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      border-radius: 14px;
+      padding: 10px;
+      min-height: 76px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .tile .t{color: var(--muted); font-size: 12.5px}
+    .tile .v{font-family: var(--mono); font-size: 18px; font-weight: 900}
+    .tile .s{color: var(--muted); font-size: 12px; margin-top: 4px}
+    .full{grid-column: 1 / -1;}
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media (max-width: 1000px){
+      .stats-grid{grid-template-columns: 1fr;}
+    }
+    .stats-table{
+      overflow:auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke);
+    }
+    .stats-table table{min-width: 900px;}
+    .pill{
+      font-family: var(--mono);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+    }
+    .muted{color: var(--muted);}
+
+    dialog::backdrop{
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>6 qui prend ! — Score + Tableau de stats</h1>
+        <div class="sub">
+          Saisissez les <b>points de pénalité</b> par manche. <b>Le plus petit total gagne.</b><br/>
+          ✅ Sauvegarde automatique • ✅ Ajout sécurisé par pop‑up • ✅ Historique des parties
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="primary" id="addRoundBtn">+ Ajouter une manche</button>
+        <button class="primary" id="endGameBtn" title="Archive la partie dans l'historique et remet le score à zéro">Fin de partie</button>
+        <button id="undoBtn" class="ghost" title="Annule la dernière manche">Annuler</button>
+        <button id="exportBtn">Exporter</button>
+        <button id="importBtn">Importer</button>
+        <button class="danger" id="newGameBtn">Nouvelle partie</button>
+        <input class="file" id="importFile" type="file" accept="application/json" />
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Tableau des manches</h2>
+        <div class="scores" role="region" aria-label="Tableau des scores">
+          <table id="scoreTable">
+            <thead>
+              <tr id="theadRow">
+                <th>Manche</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+            <tfoot>
+              <tr class="totals" id="totalsRow">
+                <td>Total</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="footer">
+          Rappel : dans la règle classique, la partie s'arrête quand quelqu’un atteint <b>66</b> points (ou plus), puis le plus petit total gagne.
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="card">
+          <h2>Joueurs</h2>
+          <div class="row">
+            <label for="p0">J1</label><input id="p0" type="text" />
+            <label for="p1">J2</label><input id="p1" type="text" />
+          </div>
+          <div class="row" style="margin-top:10px">
+            <label for="p2">J3</label><input id="p2" type="text" />
+            <label for="p3">J4</label><input id="p3" type="text" />
+          </div>
+          <div class="hint">Vous pouvez renommer les joueurs à tout moment. Tout se met à jour automatiquement.</div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <label for="target">Seuil (fin de partie)</label>
+            <input id="target" type="number" min="1" step="1" />
+            <span class="small">défaut : 66</span>
+          </div>
+          <div class="hint">
+            Indicateurs : <span class="badge"><span class="dot good"></span>Leader</span>
+            <span class="badge"><span class="dot bad"></span>Seuil atteint</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Classement (total le plus faible)</h2>
+          <div id="statusBadges" style="margin-bottom:10px"></div>
+          <div class="rank" id="ranking"></div>
+          <div class="hint" id="winnerHint"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Statistiques (multi‑parties)</h2>
+      <div class="hint" style="margin-top:0;margin-bottom:10px">
+        Pour alimenter les stats : cliquez <b>Fin de partie</b> à la fin d’un match. L’app archive automatiquement les résultats.
+      </div>
+
+      <div class="kpi" id="kpi"></div>
+
+      <div class="stats-grid">
+        <div class="card">
+          <h2>Leaders</h2>
+          <div id="leaders"></div>
+          <div class="hint">
+            Définitions :<br/>
+            • <b>“Gros score en une manche”</b> = maximum de points pris par un joueur sur une manche (tel que saisi).<br/>
+            • <b>“Série 0”</b> = plus longue série de manches consécutives à <b>0 point</b> (zéro strict) dans une partie archivée.
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Tableau complet</h2>
+          <div class="stats-table" id="statsTableWrap"></div>
+        </div>
+
+        <div class="card full">
+          <h2>Historique des parties</h2>
+          <div class="hint" style="margin-top:0;margin-bottom:10px">Astuce : vous pouvez supprimer une partie de l’historique si besoin.</div>
+          <div class="stats-table" id="historyWrap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: ajout de points -->
+  <dialog id="addPointsDialog" style="border:none;background:transparent;padding:0;max-width:520px;width:92vw;">
+    <form method="dialog" id="addPointsForm" class="card" style="margin:0;">
+      <h2 style="margin-bottom:6px">Ajouter des points</h2>
+      <div class="sub" id="addPointsSubtitle" style="margin-bottom:12px"></div>
+
+      <div class="row" style="margin-bottom:10px">
+        <label for="addPointsValue">Points à ajouter</label>
+        <input id="addPointsValue" type="number" min="0" step="1" inputmode="numeric" style="width:170px" placeholder="ex: 5" />
+        <span class="small">ajoute à la dernière manche</span>
+      </div>
+
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <button type="button" class="btn" data-quick="1">+1</button>
+        <button type="button" class="btn" data-quick="2">+2</button>
+        <button type="button" class="btn" data-quick="3">+3</button>
+        <button type="button" class="btn" data-quick="5">+5</button>
+        <button type="button" class="btn" data-quick="7">+7</button>
+        <button type="button" class="btn" data-quick="10">+10</button>
+        <button type="button" class="btn" id="addPointsClear">Effacer</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row" style="justify-content:flex-end">
+        <button value="cancel" class="ghost" type="button" id="addPointsCancel">Annuler</button>
+        <button value="ok" class="primary" id="addPointsOk" type="submit">Ajouter</button>
+      </div>
+
+      <div class="hint" style="margin-top:10px">
+        Ça incrémente la <b>dernière manche</b> (ou en crée une si besoin) pour éviter d’écraser des valeurs.
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const DEFAULT_STATE = {
+      players: ["Lilian", "Albane", "France-Pascale", "Laurent"],
+      target: 66,
+      rounds: [],
+      games: []
+    };
+
+    const KEY = "6quiprend_score_stats_v3";
+
+    function structuredCloneSafe(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return structuredCloneSafe(DEFAULT_STATE);
+        const st = JSON.parse(raw);
+
+        if(!st || !Array.isArray(st.players) || st.players.length !== 4) return structuredCloneSafe(DEFAULT_STATE);
+        if(!Array.isArray(st.rounds)) st.rounds = [];
+        if(!Array.isArray(st.games)) st.games = [];
+        if(typeof st.target !== "number" || !isFinite(st.target) || st.target <= 0) st.target = 66;
+
+        st.games = st.games.filter(g => g && Array.isArray(g.players) && g.players.length === 4 && Array.isArray(g.rounds));
+        return st;
+      }catch(e){
+        return structuredCloneSafe(DEFAULT_STATE);
+      }
+    }
+
+    function saveState(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+    let state = loadState();
+
+    // DOM
+    const theadRow = document.getElementById("theadRow");
+    const tbody = document.getElementById("tbody");
+    const totalsRow = document.getElementById("totalsRow");
+    const addRoundBtn = document.getElementById("addRoundBtn");
+    const undoBtn = document.getElementById("undoBtn");
+    const newGameBtn = document.getElementById("newGameBtn");
+    const endGameBtn = document.getElementById("endGameBtn");
+    const exportBtn = document.getElementById("exportBtn");
+    const importBtn = document.getElementById("importBtn");
+    const importFile = document.getElementById("importFile");
+    const targetInput = document.getElementById("target");
+
+    const nameInputs = [
+      document.getElementById("p0"),
+      document.getElementById("p1"),
+      document.getElementById("p2"),
+      document.getElementById("p3"),
+    ];
+
+    const rankingEl = document.getElementById("ranking");
+    const statusBadges = document.getElementById("statusBadges");
+    const winnerHint = document.getElementById("winnerHint");
+
+    // Stats
+    const kpiEl = document.getElementById("kpi");
+    const leadersEl = document.getElementById("leaders");
+    const statsTableWrap = document.getElementById("statsTableWrap");
+    const historyWrap = document.getElementById("historyWrap");
+
+    // Modal
+    const addPointsDialog = document.getElementById("addPointsDialog");
+    const addPointsForm = document.getElementById("addPointsForm");
+    const addPointsSubtitle = document.getElementById("addPointsSubtitle");
+    const addPointsValue = document.getElementById("addPointsValue");
+    const addPointsCancel = document.getElementById("addPointsCancel");
+    const addPointsClear = document.getElementById("addPointsClear");
+    let addPointsPlayerIndex = null;
+
+    // Helpers
+    const clampInt = (v) => {
+      if(v === "" || v === null || v === undefined) return null;
+      const n = Number(v);
+      if(!isFinite(n)) return null;
+      const i = Math.trunc(n);
+      return i < 0 ? 0 : i;
+    };
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (c)=>({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+
+    function sumForPlayerFromRounds(rounds, pi){
+      let s = 0;
+      for(const r of rounds){
+        const v = r?.[pi];
+        if(typeof v === "number" && isFinite(v)) s += v;
+      }
+      return s;
+    }
+    function totalsFromRounds(rounds){ return [0,1,2,3].map(i => sumForPlayerFromRounds(rounds, i)); }
+    function totals(){ return totalsFromRounds(state.rounds); }
+
+    function ranksFromTotals(tots){ return tots.map(t => 1 + tots.filter(x => x < t).length); }
+
+    function minIndices(arr){
+      const min = Math.min(...arr);
+      const idx = [];
+      arr.forEach((v,i)=>{ if(v===min) idx.push(i); });
+      return idx;
+    }
+    function anyReachedTarget(tots){ return tots.some(v => v >= state.target); }
+    function formatRoundLabel(i){ return `Manche ${i+1}`; }
+
+    function formatDate(iso){
+      try{
+        const d = new Date(iso);
+        return d.toLocaleString("fr-FR", {year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"});
+      }catch(e){ return iso; }
+    }
+
+    function ensureAtLeastOneRound(){
+      if(state.rounds.length === 0){
+        state.rounds.push([null, null, null, null]);
+      }
+    }
+
+    function normalizeRounds(rounds){
+      return rounds.map(r => {
+        const out = [0,0,0,0];
+        for(let i=0;i<4;i++){
+          const v = r?.[i];
+          out[i] = (typeof v === "number" && isFinite(v) && v >= 0) ? Math.trunc(v) : 0;
+        }
+        return out;
+      });
+    }
+
+    function longestZeroStreak(rounds, pi){
+      let best = 0, cur = 0;
+      for(const r of rounds){
+        if((r?.[pi] ?? 0) === 0){ cur++; best = Math.max(best, cur); }
+        else cur = 0;
+      }
+      return best;
+    }
+
+    function maxSingleRound(rounds, pi){
+      let best = 0;
+      for(const r of rounds){
+        const v = r?.[pi];
+        if(typeof v === "number" && isFinite(v)) best = Math.max(best, v);
+      }
+      return best;
+    }
+
+    // Render
+    function render(){
+      nameInputs.forEach((inp, i) => { if(inp.value !== state.players[i]) inp.value = state.players[i]; });
+      targetInput.value = state.target;
+
+      while(theadRow.children.length > 1) theadRow.removeChild(theadRow.lastChild);
+      state.players.forEach((p) => {
+        const th = document.createElement("th");
+        th.textContent = p;
+        theadRow.appendChild(th);
+      });
+
+      tbody.innerHTML = "";
+      state.rounds.forEach((r, ri) => {
+        const tr = document.createElement("tr");
+        const td0 = document.createElement("td");
+        td0.textContent = formatRoundLabel(ri);
+        tr.appendChild(td0);
+
+        for(let pi=0; pi<4; pi++){
+          const td = document.createElement("td");
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "0";
+          input.step = "1";
+          input.inputMode = "numeric";
+          input.className = "cell-input";
+          const v = r?.[pi];
+          input.value = (typeof v === "number" && isFinite(v)) ? String(v) : "";
+          input.placeholder = "0";
+          input.addEventListener("input", (e) => {
+            const val = clampInt(e.target.value);
+            state.rounds[ri][pi] = val;
+            saveState();
+            renderTotalsAndRanking();
+          });
+          td.appendChild(input);
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+
+      while(totalsRow.children.length > 1) totalsRow.removeChild(totalsRow.lastChild);
+      for(let pi=0; pi<4; pi++){
+        const td = document.createElement("td");
+        td.id = `total_${pi}`;
+        td.textContent = "0";
+        totalsRow.appendChild(td);
+      }
+
+      renderTotalsAndRanking();
+      renderStats();
+      saveState();
+
+      undoBtn.disabled = state.rounds.length === 0;
+      endGameBtn.disabled = state.rounds.length === 0;
+    }
+
+    function renderTotalsAndRanking(){
+      const tots = totals();
+      const leaders = minIndices(tots);
+
+      for(let pi=0; pi<4; pi++){
+        const td = document.getElementById(`total_${pi}`);
+        td.textContent = String(tots[pi]);
+        td.style.color = leaders.includes(pi) ? "var(--good)" : "var(--text)";
+        td.style.fontWeight = leaders.includes(pi) ? "900" : "850";
+      }
+
+      statusBadges.innerHTML = "";
+      const leaderBadge = document.createElement("span");
+      leaderBadge.className = "badge";
+      leaderBadge.innerHTML = `<span class="dot good"></span>Leader : <b style="margin-left:6px">${leaders.map(i=>escapeHtml(state.players[i])).join(" / ")}</b>`;
+      statusBadges.appendChild(leaderBadge);
+
+      if(anyReachedTarget(tots)){
+        const overBadge = document.createElement("span");
+        overBadge.className = "badge";
+        overBadge.innerHTML = `<span class="dot bad"></span>Seuil ${state.target} atteint`;
+        statusBadges.appendChild(overBadge);
+      } else {
+        const progBadge = document.createElement("span");
+        progBadge.className = "badge";
+        const max = Math.max(...tots);
+        const pct = Math.min(100, Math.round((max / state.target) * 100));
+        progBadge.innerHTML = `<span class="dot warn"></span>Progression : <b style="margin-left:6px">${pct}%</b>`;
+        statusBadges.appendChild(progBadge);
+      }
+
+      const items = [0,1,2,3].map(i => ({i, name: state.players[i], total: tots[i], rank: 0}))
+                             .sort((a,b)=> a.total - b.total);
+      const rankByIdx = ranksFromTotals(tots);
+      items.forEach(it => it.rank = rankByIdx[it.i]);
+
+      rankingEl.innerHTML = "";
+      items.forEach((it) => {
+        const div = document.createElement("div");
+        div.className = "rank-item" + (it.rank===1 ? " win" : "") + ((tots[it.i] >= state.target) ? " over" : "");
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;min-width:240px">
+            <span class="pos">${it.rank}</span>
+            <div>
+              <div style="font-weight:850">${escapeHtml(it.name)}</div>
+              <div class="small">${(tots[it.i] >= state.target) ? `≥ ${state.target} (seuil)` : "&nbsp;"}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button type="button" class="btn" data-add-points="${it.i}" title="Ajouter des points à ${escapeHtml(it.name)}">+ Ajouter</button>
+            <b>${it.total}</b>
+          </div>
+        `;
+        rankingEl.appendChild(div);
+      });
+
+      if(anyReachedTarget(tots)){
+        winnerHint.innerHTML = `Fin de partie probable : seuil atteint. Gagnant provisoire : <b style="color:var(--good)">${leaders.map(i=>escapeHtml(state.players[i])).join(" / ")}</b>.`;
+      } else if(state.rounds.length === 0){
+        winnerHint.textContent = "Ajoutez une manche pour commencer.";
+      } else {
+        winnerHint.innerHTML = `Gagnant provisoire : <b style="color:var(--good)">${leaders.map(i=>escapeHtml(state.players[i])).join(" / ")}</b>.`;
+      }
+    }
+
+    // Modal logic
+    function openAddPoints(pi){
+      addPointsPlayerIndex = pi;
+      ensureAtLeastOneRound();
+      const playerName = state.players[pi] || `J${pi+1}`;
+      addPointsSubtitle.innerHTML = `Joueur : <b>${escapeHtml(playerName)}</b> • Manche ciblée : <b>la dernière</b>`;
+      addPointsValue.value = "";
+      if(typeof addPointsDialog.showModal === "function"){
+        addPointsDialog.showModal();
+      }else{
+        const v = prompt(`Ajouter combien de points à ${playerName} ?`, "0");
+        const pts = clampInt(v);
+        if(pts !== null) applyAddPoints(pi, pts);
+      }
+      setTimeout(()=> addPointsValue.focus(), 50);
+    }
+
+    function applyAddPoints(pi, pts){
+      if(pts === null) return;
+      ensureAtLeastOneRound();
+      const ri = state.rounds.length - 1;
+      const current = (typeof state.rounds[ri][pi] === "number" && isFinite(state.rounds[ri][pi])) ? state.rounds[ri][pi] : 0;
+      state.rounds[ri][pi] = current + pts;
+      saveState();
+      render();
+      setTimeout(()=> {
+        const lastRow = tbody.lastElementChild;
+        if(!lastRow) return;
+        const inp = lastRow.querySelectorAll("input.cell-input")[pi];
+        if(!inp) return;
+        const prev = inp.style.outline;
+        inp.style.outline = "2px solid rgba(0,217,255,.65)";
+        setTimeout(()=> inp.style.outline = prev, 450);
+      }, 0);
+    }
+
+    addPointsDialog.addEventListener("click", (e) => {
+      const rect = addPointsForm.getBoundingClientRect();
+      const x = e.clientX, y = e.clientY;
+      const inside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+      if(!inside) addPointsDialog.close("cancel");
+    });
+    addPointsCancel.addEventListener("click", () => addPointsDialog.close("cancel"));
+    addPointsClear.addEventListener("click", () => { addPointsValue.value = ""; addPointsValue.focus(); });
+    addPointsForm.querySelectorAll("[data-quick]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const inc = Number(btn.getAttribute("data-quick"));
+        const cur = clampInt(addPointsValue.value) ?? 0;
+        addPointsValue.value = String(cur + inc);
+        addPointsValue.focus();
+      });
+    });
+    addPointsForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pts = clampInt(addPointsValue.value);
+      if(addPointsPlayerIndex === null) return addPointsDialog.close("cancel");
+      if(pts === null) return addPointsDialog.close("cancel");
+      addPointsDialog.close("ok");
+      applyAddPoints(addPointsPlayerIndex, pts);
+    });
+
+    // Actions
+    function addRound(){
+      state.rounds.push([null, null, null, null]);
+      saveState();
+      render();
+      setTimeout(() => {
+        const lastRow = tbody.lastElementChild;
+        const inp = lastRow?.querySelector("input");
+        inp?.focus();
+      }, 0);
+    }
+
+    function undoRound(){
+      if(state.rounds.length === 0) return;
+      state.rounds.pop();
+      saveState();
+      render();
+    }
+
+    function newGame(){
+      const ok = confirm("Nouvelle partie : effacer toutes les manches et remettre les scores à zéro ? (L'historique des parties est conservé)");
+      if(!ok) return;
+      state.rounds = [];
+      saveState();
+      render();
+    }
+
+    function endGame(){
+      if(state.rounds.length === 0){
+        alert("Aucune manche à archiver.");
+        return;
+      }
+      const tots = totals();
+      const leaders = minIndices(tots);
+      const names = leaders.map(i => state.players[i]).join(" / ");
+      const ok = confirm(`Fin de partie : archiver la partie ?
+Gagnant provisoire: ${names}
+
+(Conseil: faites-le quand la partie est réellement terminée.)`);
+      if(!ok) return;
+
+      const normalized = normalizeRounds(state.rounds);
+      const totalsNorm = totalsFromRounds(normalized);
+      const ranks = ranksFromTotals(totalsNorm);
+
+      const game = {
+        id: (crypto?.randomUUID?.() || ("g_" + Math.random().toString(16).slice(2))),
+        endedAt: new Date().toISOString(),
+        target: state.target,
+        players: state.players.slice(),
+        rounds: normalized,
+        totals: totalsNorm,
+        ranks: ranks
+      };
+
+      state.games.unshift(game);
+      state.rounds = [];
+      saveState();
+      render();
+    }
+
+    function exportJSON(){
+      const data = {...state, exported_at: new Date().toISOString(), version: "v3"};
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+      a.href = url;
+      a.download = `6-qui-prend-score-stats-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJSONFile(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const obj = JSON.parse(reader.result);
+          const st = {
+            players: Array.isArray(obj.players) ? obj.players : DEFAULT_STATE.players,
+            target: typeof obj.target === "number" ? obj.target : DEFAULT_STATE.target,
+            rounds: Array.isArray(obj.rounds) ? obj.rounds : [],
+            games: Array.isArray(obj.games) ? obj.games : []
+          };
+          if(st.players.length !== 4) throw new Error("players length");
+
+          st.rounds = st.rounds.map(r => {
+            if(!Array.isArray(r) || r.length !== 4) return [null,null,null,null];
+            return r.map(v => (typeof v === "number" && isFinite(v) && v >= 0) ? Math.trunc(v) : null);
+          });
+
+          st.games = st.games.filter(g => g && Array.isArray(g.players) && g.players.length === 4 && Array.isArray(g.rounds))
+                             .map(g => {
+                               const rounds = normalizeRounds(g.rounds);
+                               const totals = Array.isArray(g.totals) && g.totals.length === 4 ? g.totals.map(x=>Math.trunc(Number(x)||0)) : totalsFromRounds(rounds);
+                               const ranks = Array.isArray(g.ranks) && g.ranks.length === 4 ? g.ranks.map(x=>Math.trunc(Number(x)||1)) : ranksFromTotals(totals);
+                               return {
+                                 id: g.id || ("g_" + Math.random().toString(16).slice(2)),
+                                 endedAt: g.endedAt || new Date().toISOString(),
+                                 target: typeof g.target === "number" ? g.target : 66,
+                                 players: g.players.slice(),
+                                 rounds, totals, ranks
+                               };
+                             });
+
+          state = st;
+          saveState();
+          render();
+          alert("Import réussi ✅");
+        }catch(e){
+          alert("Impossible d'importer ce fichier (format JSON inattendu).");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function deleteGame(id){
+      const g = state.games.find(x => x.id === id);
+      if(!g) return;
+      const ok = confirm(`Supprimer cette partie du ${formatDate(g.endedAt)} ?`);
+      if(!ok) return;
+      state.games = state.games.filter(x => x.id !== id);
+      saveState();
+      renderStats();
+    }
+
+    // Stats dashboard
+    function renderStats(){
+      const games = state.games;
+      const players = state.players;
+      const gamesCount = games.length;
+
+      const totalPointsAll = games.reduce((acc,g)=> acc + (g.totals?.reduce((a,b)=>a+b,0) || 0), 0);
+      const avgPointsPerGameAll = gamesCount ? Math.round((totalPointsAll / gamesCount) * 10)/10 : 0;
+      const lastEnded = gamesCount ? formatDate(games[0].endedAt) : "—";
+
+      const wins = [0,0,0,0];
+      const places = {1:[0,0,0,0],2:[0,0,0,0],3:[0,0,0,0],4:[0,0,0,0]};
+      const totalPoints = [0,0,0,0];
+      const bestSingleRound = [0,0,0,0];
+      const bestZeroStreak = [0,0,0,0];
+
+      for(const g of games){
+        const tots = g.totals || [0,0,0,0];
+        const ranks = g.ranks || ranksFromTotals(tots);
+        for(let i=0;i<4;i++){
+          totalPoints[i] += tots[i] || 0;
+          if(ranks[i] === 1) wins[i] += 1;
+          if(places[ranks[i]]) places[ranks[i]][i] += 1;
+          bestSingleRound[i] = Math.max(bestSingleRound[i], maxSingleRound(g.rounds, i));
+          bestZeroStreak[i] = Math.max(bestZeroStreak[i], longestZeroStreak(g.rounds, i));
+        }
+      }
+
+      const avgPoints = totalPoints.map(tp => gamesCount ? Math.round((tp/gamesCount)*10)/10 : 0);
+      const podiums = [0,0,0,0].map(i => places[1][i] + places[2][i] + places[3][i]);
+
+      function leaderOf(arr, mode="max"){
+        if(gamesCount === 0) return {names:"—", value:0, idxs:[]};
+        const best = (mode==="min") ? Math.min(...arr) : Math.max(...arr);
+        const idxs = arr.map((v,i)=>({v,i})).filter(x => x.v === best).map(x=>x.i);
+        return {names: idxs.map(i=>players[i]).join(" / "), value: best, idxs};
+      }
+
+      const winLeader = leaderOf(wins, "max");
+      const secondLeader = leaderOf(places[2], "max");
+      const podiumLeader = leaderOf(podiums, "max");
+      const bestSingleLeader = leaderOf(bestSingleRound, "max");
+      const zeroStreakLeader = leaderOf(bestZeroStreak, "max");
+      const bestAvgLeader = leaderOf(avgPoints, "min");
+      const worstAvgLeader = leaderOf(avgPoints, "max");
+
+      // KPI tiles
+      kpiEl.innerHTML = "";
+      const tiles = [
+        {t:"Parties jouées", v: gamesCount, s:"historique (Fin de partie)"},
+        {t:"Points cumulés (table)", v: totalPointsAll, s:"tous joueurs confondus"},
+        {t:"Moyenne points / partie", v: avgPointsPerGameAll, s:"total table / parties"},
+        {t:"Dernière partie", v: lastEnded, s:"date/heure"},
+      ];
+      for(const it of tiles){
+        const d = document.createElement("div");
+        d.className = "tile";
+        d.innerHTML = `<div class="t">${escapeHtml(it.t)}</div><div class="v">${escapeHtml(it.v)}</div><div class="s">${escapeHtml(it.s)}</div>`;
+        kpiEl.appendChild(d);
+      }
+
+      // Leaders
+      leadersEl.innerHTML = "";
+      const leaderLines = [
+        {label:"🏆 Le plus de victoires", who: winLeader.names, val: winLeader.value, suffix:"victoire(s)"},
+        {label:"🥈 Le plus de 2e places", who: secondLeader.names, val: secondLeader.value, suffix:"fois"},
+        {label:"🥉 Le plus de podiums (1‑3)", who: podiumLeader.names, val: podiumLeader.value, suffix:"podium(s)"},
+        {label:"📈 Gros score en une manche", who: bestSingleLeader.names, val: bestSingleLeader.value, suffix:"points"},
+        {label:"🧊 Série 0 la plus longue", who: zeroStreakLeader.names, val: zeroStreakLeader.value, suffix:"manche(s)"},
+        {label:"✅ Meilleure moyenne (plus bas)", who: bestAvgLeader.names, val: bestAvgLeader.value, suffix:"pts/partie"},
+        {label:"💥 Pire moyenne (plus haut)", who: worstAvgLeader.names, val: worstAvgLeader.value, suffix:"pts/partie"},
+      ];
+      leaderLines.forEach(x => {
+        const b = document.createElement("div");
+        b.className = "rank-item";
+        b.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font-weight:850">${escapeHtml(x.label)}</div>
+            <div class="small">${escapeHtml(x.who)}</div>
+          </div>
+          <div class="pill">${escapeHtml(x.val)} ${escapeHtml(x.suffix)}</div>
+        `;
+        leadersEl.appendChild(b);
+      });
+
+      // Full table
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Joueur</th>
+            <th>1er</th>
+            <th>2e</th>
+            <th>3e</th>
+            <th>4e</th>
+            <th>Podiums</th>
+            <th>Total pts</th>
+            <th>Moy. pts/partie</th>
+            <th>Meilleure manche (max)</th>
+            <th>Meilleure série 0 (max)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[0,1,2,3].map(i => `
+            <tr>
+              <td><b>${escapeHtml(players[i])}</b></td>
+              <td>${places[1][i]}</td>
+              <td>${places[2][i]}</td>
+              <td>${places[3][i]}</td>
+              <td>${places[4][i]}</td>
+              <td><span class="pill">${podiums[i]}</span></td>
+              <td><span class="pill">${totalPoints[i]}</span></td>
+              <td>${avgPoints[i]}</td>
+              <td>${bestSingleRound[i]}</td>
+              <td>${bestZeroStreak[i]}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+      statsTableWrap.innerHTML = "";
+      const wrap = document.createElement("div");
+      wrap.className = "stats-table";
+      wrap.appendChild(table);
+      statsTableWrap.appendChild(wrap);
+
+      // History
+      const hTable = document.createElement("table");
+      hTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Gagnant</th>
+            <th>Totaux</th>
+            <th>Manches</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${games.slice(0, 50).map(g => {
+            const winners = [0,1,2,3].filter(i => (g.ranks?.[i] ?? 99) === 1).map(i => g.players[i]).join(" / ");
+            const totalsLine = g.totals.map((t,i)=> `${g.players[i]}: ${t}`).join(" • ");
+            return `
+              <tr>
+                <td>${escapeHtml(formatDate(g.endedAt))}</td>
+                <td><b>${escapeHtml(winners || "—")}</b></td>
+                <td class="muted">${escapeHtml(totalsLine)}</td>
+                <td>${g.rounds.length}</td>
+                <td><button class="btn danger" data-del-game="${g.id}">Supprimer</button></td>
+              </tr>
+            `;
+          }).join("")}
+          ${games.length === 0 ? `
+            <tr><td colspan="5" class="muted" style="text-align:left;padding:14px">Aucune partie archivée pour l’instant. Terminez une partie via <b>Fin de partie</b> pour alimenter les stats.</td></tr>
+          ` : ""}
+        </tbody>
+      `;
+      historyWrap.innerHTML = "";
+      const hWrap = document.createElement("div");
+      hWrap.className = "stats-table";
+      hWrap.appendChild(hTable);
+      historyWrap.appendChild(hWrap);
+    }
+
+    // Bindings
+    addRoundBtn.addEventListener("click", addRound);
+    undoBtn.addEventListener("click", undoRound);
+    newGameBtn.addEventListener("click", newGame);
+    endGameBtn.addEventListener("click", endGame);
+
+    exportBtn.addEventListener("click", exportJSON);
+    importBtn.addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", (e) => {
+      const f = e.target.files?.[0];
+      if(f) importJSONFile(f);
+      importFile.value = "";
+    });
+
+    nameInputs.forEach((inp, i) => {
+      inp.addEventListener("input", () => {
+        state.players[i] = (inp.value || "").trim() || DEFAULT_STATE.players[i];
+        saveState();
+        render();
+      });
+    });
+
+    targetInput.addEventListener("input", () => {
+      const v = clampInt(targetInput.value);
+      state.target = (v && v > 0) ? v : 66;
+      saveState();
+      renderTotalsAndRanking();
+    });
+
+    rankingEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-add-points]");
+      if(!btn) return;
+      const pi = Number(btn.getAttribute("data-add-points"));
+      if(Number.isFinite(pi)) openAddPoints(pi);
+    });
+
+    historyWrap.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-del-game]");
+      if(!btn) return;
+      const id = btn.getAttribute("data-del-game");
+      if(id) deleteGame(id);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+      if(mod && e.key.toLowerCase() === "z"){
+        e.preventDefault();
+        undoRound();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
