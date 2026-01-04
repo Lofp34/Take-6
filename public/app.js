@@ -31,6 +31,7 @@
 
     let state = structuredCloneSafe(DEFAULT_STATE);
     let activeMatchId = getActiveMatchId();
+    let matchEndedHandled = false;
 
     // DOM
     const theadRow = document.getElementById("theadRow");
@@ -158,6 +159,7 @@
       state.roundIds = Array.isArray(payload.roundIds) ? payload.roundIds : [];
       activeMatchId = payload.id || activeMatchId;
       if(activeMatchId) setActiveMatchId(activeMatchId);
+      matchEndedHandled = false;
     }
 
     async function loadActiveMatch(){
@@ -216,10 +218,11 @@
       const roundId = state.roundIds[ri];
       if(!roundId || !activeMatchId) return;
       const scores = state.rounds[ri];
-      await apiFetch(`/api/matches/${activeMatchId}/rounds/${roundId}`, {
+      const result = await apiFetch(`/api/matches/${activeMatchId}/rounds/${roundId}`, {
         method: "PUT",
         body: JSON.stringify({ scores })
       });
+      if(result?.matchEnded) await handleMatchEnded();
     }
 
     async function deleteLastRound(){
@@ -239,6 +242,28 @@
       state.rounds = [];
       state.roundIds = [];
       await loadHistory();
+    }
+
+    async function handleMatchEnded(){
+      if(matchEndedHandled) return;
+      matchEndedHandled = true;
+      const finalTotals = totals();
+      const leaders = minIndices(finalTotals);
+      const names = leaders.map(i => state.players[i]).join(" / ");
+      setActiveMatchId(null);
+      activeMatchId = null;
+      state.rounds = [];
+      state.roundIds = [];
+      await loadHistory();
+      render();
+      const ok = confirm(`Partie terminée : seuil ${state.target} atteint.
+Gagnant${leaders.length > 1 ? "s" : ""} : ${names || "—"}
+
+Voulez-vous démarrer une nouvelle partie ?`);
+      if(ok){
+        await createMatch();
+        render();
+      }
     }
 
     async function deleteActiveMatch(){
@@ -420,7 +445,7 @@
       });
 
       if(anyReachedTarget(tots)){
-        winnerHint.innerHTML = `Fin de partie probable : seuil atteint. Gagnant provisoire : <b style="color:var(--good)">${leaders.map(i=>escapeHtml(state.players[i])).join(" / ")}</b>.`;
+        winnerHint.innerHTML = `Seuil atteint : la partie se clôture en fin de manche. Gagnant provisoire : <b style="color:var(--good)">${leaders.map(i=>escapeHtml(state.players[i])).join(" / ")}</b>.`;
       } else if(state.rounds.length === 0){
         winnerHint.textContent = "Ajoutez une manche pour commencer.";
       } else {

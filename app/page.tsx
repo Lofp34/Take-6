@@ -9,13 +9,13 @@ const markup = `
       <h1>6 qui prend ! — Score + Tableau de stats</h1>
       <div class="sub">
         Saisissez les <b>points de pénalité</b> par manche. <b>Le plus petit total gagne.</b><br/>
-        ✅ Sauvegarde automatique • ✅ Ajout sécurisé par pop‑up • ✅ Historique des parties
+        ✅ Fin automatique à 66 • ✅ Ajout sécurisé par pop‑up • ✅ Historique des parties
       </div>
     </div>
 
     <div class="toolbar">
       <button class="primary" id="addRoundBtn">+ Ajouter une manche</button>
-      <button class="primary" id="endGameBtn" title="Archive la partie dans l'historique et remet le score à zéro">Fin de partie</button>
+      <button class="primary" id="endGameBtn" title="Archive la partie dans l'historique et remet le score à zéro">Fin de partie (manuel)</button>
       <button id="undoBtn" class="ghost" title="Annule la dernière manche">Annuler</button>
       <button id="exportBtn">Exporter</button>
       <button id="importBtn">Importer</button>
@@ -43,7 +43,7 @@ const markup = `
         </table>
       </div>
       <div class="footer">
-        Rappel : dans la règle classique, la partie s'arrête quand quelqu’un atteint <b>66</b> points (ou plus), puis le plus petit total gagne.
+        Rappel : la partie s'arrête à la fin d'une manche dès que quelqu’un atteint <b>66</b> points (ou plus), puis le plus petit total gagne.
       </div>
     </div>
 
@@ -85,7 +85,7 @@ const markup = `
   <div class="card">
     <h2>Statistiques (multi‑parties)</h2>
     <div class="hint" style="margin-top:0;margin-bottom:10px">
-      Pour alimenter les stats : cliquez <b>Fin de partie</b> à la fin d’un match. L’app archive automatiquement les résultats.
+      Les stats se mettent à jour à la fin d’une partie (clôture automatique à 66, ou bouton <b>Fin de partie (manuel)</b>).
     </div>
 
     <div class="kpi" id="kpi"></div>
