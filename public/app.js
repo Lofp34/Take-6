@@ -73,6 +73,7 @@
     let addPointsPlayerIndex = null;
 
     const roundUpdateTimers = new Map();
+    const roundFinalizeFlags = new Map();
     const playerUpdateTimers = new Map();
     let targetUpdateTimer = null;
 
@@ -143,6 +144,10 @@
     }
     function anyReachedTarget(tots){ return tots.some(v => v >= state.target); }
     function formatRoundLabel(i){ return `Manche ${i+1}`; }
+    function isRoundComplete(round){
+      if(!Array.isArray(round) || round.length !== 4) return false;
+      return round.every(v => typeof v === "number" && isFinite(v));
+    }
 
     function formatDate(iso){
       try{
@@ -160,6 +165,7 @@
       activeMatchId = payload.id || activeMatchId;
       if(activeMatchId) setActiveMatchId(activeMatchId);
       matchEndedHandled = false;
+      roundFinalizeFlags.clear();
     }
 
     async function loadActiveMatch(){
@@ -218,11 +224,20 @@
       const roundId = state.roundIds[ri];
       if(!roundId || !activeMatchId) return;
       const scores = state.rounds[ri];
+      const finalizeRound = roundFinalizeFlags.get(ri) === true;
       const result = await apiFetch(`/api/matches/${activeMatchId}/rounds/${roundId}`, {
         method: "PUT",
-        body: JSON.stringify({ scores })
+        body: JSON.stringify({ scores, finalizeRound })
       });
-      if(result?.matchEnded) await handleMatchEnded();
+      if(finalizeRound) roundFinalizeFlags.delete(ri);
+      if(result?.matchEnded){
+        await handleMatchEnded();
+        return;
+      }
+      if(finalizeRound && state.rounds.length === ri + 1 && isRoundComplete(state.rounds[ri])){
+        await createRound();
+        render();
+      }
     }
 
     async function deleteLastRound(){
@@ -362,8 +377,15 @@ Voulez-vous démarrer une nouvelle partie ?`);
           input.value = (typeof v === "number" && isFinite(v)) ? String(v) : "";
           input.placeholder = "0";
           input.addEventListener("input", (e) => {
+            const wasComplete = isRoundComplete(state.rounds[ri]);
             const val = clampInt(e.target.value);
             state.rounds[ri][pi] = val;
+            const nowComplete = isRoundComplete(state.rounds[ri]);
+            if(nowComplete && !wasComplete){
+              roundFinalizeFlags.set(ri, true);
+            }else if(!nowComplete){
+              roundFinalizeFlags.delete(ri);
+            }
             scheduleRoundUpdate(ri);
             renderTotalsAndRanking();
           });

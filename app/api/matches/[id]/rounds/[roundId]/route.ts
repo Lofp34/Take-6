@@ -29,6 +29,7 @@ export async function PUT(
     if (!scores.success) {
       return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
     }
+    const finalizeRound = body?.finalizeRound === true;
 
     const round = await prisma.round.findUnique({
       where: { id: params.roundId },
@@ -76,7 +77,7 @@ export async function PUT(
 
     let matchEnded = false;
     let endedAt: Date | null = null;
-    if (match.status === "ACTIVE") {
+    if (match.status === "ACTIVE" && finalizeRound) {
       const roundScoreCount = await prisma.score.count({
         where: { roundId: params.roundId },
       });
