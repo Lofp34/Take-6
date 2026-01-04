@@ -17,6 +17,7 @@ const markup = `
       <button class="primary" id="addRoundBtn">+ Ajouter une manche</button>
       <button class="primary" id="endGameBtn" title="Archive la partie dans l'historique et remet le score à zéro">Fin de partie (manuel)</button>
       <button id="undoBtn" class="ghost" title="Annule la dernière manche">Annuler</button>
+      <button id="resetBoardBtn" class="ghost" title="Remet tous les scores a zero pour la partie en cours">Remettre a zero</button>
       <button id="exportBtn">Exporter</button>
       <button id="importBtn">Importer</button>
       <button class="danger" id="newGameBtn">Nouvelle partie</button>

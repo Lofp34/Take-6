@@ -39,6 +39,7 @@
     const totalsRow = document.getElementById("totalsRow");
     const addRoundBtn = document.getElementById("addRoundBtn");
     const undoBtn = document.getElementById("undoBtn");
+    const resetBoardBtn = document.getElementById("resetBoardBtn");
     const newGameBtn = document.getElementById("newGameBtn");
     const endGameBtn = document.getElementById("endGameBtn");
     const exportBtn = document.getElementById("exportBtn");
@@ -562,6 +563,25 @@ Voulez-vous démarrer une nouvelle partie ?`);
       render();
     }
 
+    async function resetLeaderboard(){
+      if(state.rounds.length === 0){
+        alert("Aucune manche à remettre à zéro.");
+        return;
+      }
+      const ok = confirm("Reset leaderboard : effacer toutes les manches de la partie en cours ?");
+      if(!ok) return;
+      if(!activeMatchId){
+        state.rounds = [];
+        state.roundIds = [];
+        render();
+        return;
+      }
+      while(state.rounds.length > 0){
+        await deleteLastRound();
+      }
+      render();
+    }
+
     async function endGame(){
       if(state.rounds.length === 0){
         alert("Aucune manche à archiver.");
@@ -818,6 +838,9 @@ Gagnant provisoire: ${names}
     }));
     undoBtn.addEventListener("click", () => undoRound().catch((err) => {
       console.error("undo_round_failed", err);
+    }));
+    resetBoardBtn.addEventListener("click", () => resetLeaderboard().catch((err) => {
+      console.error("reset_leaderboard_failed", err);
     }));
     newGameBtn.addEventListener("click", () => newGame().catch((err) => {
       console.error("new_game_failed", err);
