@@ -3,6 +3,13 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { scoresSchema } from "@/lib/validation";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+function hasReachedTarget(
+  totals: Array<{ points: number }>,
+  target: number
+) {
+  return totals.some((t) => t.points >= target);
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: { id: string; roundId: string } }
@@ -22,9 +29,20 @@ export async function PUT(
     if (!scores.success) {
       return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
     }
+    const finalizeRound = body?.finalizeRound === true;
 
-    const round = await prisma.round.findUnique({ where: { id: params.roundId } });
+    const round = await prisma.round.findUnique({
+      where: { id: params.roundId },
+    });
     if (!round || round.matchId !== params.id) {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
+
+    const match = await prisma.match.findUnique({
+      where: { id: params.id },
+      select: { status: true, target: true, playerCount: true },
+    });
+    if (!match) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
 
@@ -57,7 +75,40 @@ export async function PUT(
 
     await prisma.$transaction(ops);
 
-    return NextResponse.json({ ok: true });
+    let matchEnded = false;
+    let endedAt: Date | null = null;
+    if (match.status === "ACTIVE" && finalizeRound) {
+      const roundScoreCount = await prisma.score.count({
+        where: { roundId: params.roundId },
+      });
+      if (roundScoreCount === match.playerCount) {
+        const totals = await prisma.score.groupBy({
+          by: ["playerId"],
+          where: { matchId: params.id },
+          _sum: { points: true },
+        });
+        const normalizedTotals = totals.map((row) => ({
+          points: row._sum.points ?? 0,
+        }));
+        if (hasReachedTarget(normalizedTotals, match.target)) {
+          const endedAtValue = new Date();
+          const update = await prisma.match.updateMany({
+            where: { id: params.id, status: "ACTIVE" },
+            data: { status: "FINISHED", endedAt: endedAtValue },
+          });
+          if (update.count > 0) {
+            matchEnded = true;
+            endedAt = endedAtValue;
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      matchEnded,
+      endedAt: endedAt?.toISOString() ?? null,
+    });
   } catch (error) {
     console.error("db_error", { route: "matches:id:rounds:id:PUT", error });
     return NextResponse.json({ error: "server_error" }, { status: 500 });

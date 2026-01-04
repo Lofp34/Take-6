@@ -31,6 +31,7 @@
 
     let state = structuredCloneSafe(DEFAULT_STATE);
     let activeMatchId = getActiveMatchId();
+    let matchEndedHandled = false;
 
     // DOM
     const theadRow = document.getElementById("theadRow");
@@ -38,6 +39,7 @@
     const totalsRow = document.getElementById("totalsRow");
     const addRoundBtn = document.getElementById("addRoundBtn");
     const undoBtn = document.getElementById("undoBtn");
+    const resetBoardBtn = document.getElementById("resetBoardBtn");
     const newGameBtn = document.getElementById("newGameBtn");
     const endGameBtn = document.getElementById("endGameBtn");
     const exportBtn = document.getElementById("exportBtn");
@@ -72,6 +74,7 @@
     let addPointsPlayerIndex = null;
 
     const roundUpdateTimers = new Map();
+    const roundFinalizeFlags = new Map();
     const playerUpdateTimers = new Map();
     let targetUpdateTimer = null;
 
@@ -142,6 +145,10 @@
     }
     function anyReachedTarget(tots){ return tots.some(v => v >= state.target); }
     function formatRoundLabel(i){ return `Manche ${i+1}`; }
+    function isRoundComplete(round){
+      if(!Array.isArray(round) || round.length !== 4) return false;
+      return round.every(v => typeof v === "number" && isFinite(v));
+    }
 
     function formatDate(iso){
       try{
@@ -158,6 +165,8 @@
       state.roundIds = Array.isArray(payload.roundIds) ? payload.roundIds : [];
       activeMatchId = payload.id || activeMatchId;
       if(activeMatchId) setActiveMatchId(activeMatchId);
+      matchEndedHandled = false;
+      roundFinalizeFlags.clear();
     }
 
     async function loadActiveMatch(){
@@ -216,10 +225,20 @@
       const roundId = state.roundIds[ri];
       if(!roundId || !activeMatchId) return;
       const scores = state.rounds[ri];
-      await apiFetch(`/api/matches/${activeMatchId}/rounds/${roundId}`, {
+      const finalizeRound = roundFinalizeFlags.get(ri) === true;
+      const result = await apiFetch(`/api/matches/${activeMatchId}/rounds/${roundId}`, {
         method: "PUT",
-        body: JSON.stringify({ scores })
+        body: JSON.stringify({ scores, finalizeRound })
       });
+      if(finalizeRound) roundFinalizeFlags.delete(ri);
+      if(result?.matchEnded){
+        await handleMatchEnded();
+        return;
+      }
+      if(finalizeRound && state.rounds.length === ri + 1 && isRoundComplete(state.rounds[ri])){
+        await createRound();
+        render();
+      }
     }
 
     async function deleteLastRound(){
@@ -239,6 +258,28 @@
       state.rounds = [];
       state.roundIds = [];
       await loadHistory();
+    }
+
+    async function handleMatchEnded(){
+      if(matchEndedHandled) return;
+      matchEndedHandled = true;
+      const finalTotals = totals();
+      const leaders = minIndices(finalTotals);
+      const names = leaders.map(i => state.players[i]).join(" / ");
+      setActiveMatchId(null);
+      activeMatchId = null;
+      state.rounds = [];
+      state.roundIds = [];
+      await loadHistory();
+      render();
+      const ok = confirm(`Partie terminée : seuil ${state.target} atteint.
+Gagnant${leaders.length > 1 ? "s" : ""} : ${names || "—"}
+
+Voulez-vous démarrer une nouvelle partie ?`);
+      if(ok){
+        await createMatch();
+        render();
+      }
     }
 
     async function deleteActiveMatch(){
@@ -337,8 +378,15 @@
           input.value = (typeof v === "number" && isFinite(v)) ? String(v) : "";
           input.placeholder = "0";
           input.addEventListener("input", (e) => {
+            const wasComplete = isRoundComplete(state.rounds[ri]);
             const val = clampInt(e.target.value);
             state.rounds[ri][pi] = val;
+            const nowComplete = isRoundComplete(state.rounds[ri]);
+            if(nowComplete && !wasComplete){
+              roundFinalizeFlags.set(ri, true);
+            }else if(!nowComplete){
+              roundFinalizeFlags.delete(ri);
+            }
             scheduleRoundUpdate(ri);
             renderTotalsAndRanking();
           });
@@ -420,7 +468,7 @@
       });
 
       if(anyReachedTarget(tots)){
-        winnerHint.innerHTML = `Fin de partie probable : seuil atteint. Gagnant provisoire : <b style="color:var(--good)">${leaders.map(i=>escapeHtml(state.players[i])).join(" / ")}</b>.`;
+        winnerHint.innerHTML = `Seuil atteint : la partie se clôture en fin de manche. Gagnant provisoire : <b style="color:var(--good)">${leaders.map(i=>escapeHtml(state.players[i])).join(" / ")}</b>.`;
       } else if(state.rounds.length === 0){
         winnerHint.textContent = "Ajoutez une manche pour commencer.";
       } else {
@@ -512,6 +560,25 @@
       const ok = confirm("Nouvelle partie : effacer toutes les manches et remettre les scores à zéro ? (L'historique des parties est conservé)");
       if(!ok) return;
       await deleteActiveMatch();
+      render();
+    }
+
+    async function resetLeaderboard(){
+      if(state.rounds.length === 0){
+        alert("Aucune manche à remettre à zéro.");
+        return;
+      }
+      const ok = confirm("Reset leaderboard : effacer toutes les manches de la partie en cours ?");
+      if(!ok) return;
+      if(!activeMatchId){
+        state.rounds = [];
+        state.roundIds = [];
+        render();
+        return;
+      }
+      while(state.rounds.length > 0){
+        await deleteLastRound();
+      }
       render();
     }
 
@@ -771,6 +838,9 @@ Gagnant provisoire: ${names}
     }));
     undoBtn.addEventListener("click", () => undoRound().catch((err) => {
       console.error("undo_round_failed", err);
+    }));
+    resetBoardBtn.addEventListener("click", () => resetLeaderboard().catch((err) => {
+      console.error("reset_leaderboard_failed", err);
     }));
     newGameBtn.addEventListener("click", () => newGame().catch((err) => {
       console.error("new_game_failed", err);
